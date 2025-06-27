@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { personalInfo, skills } from '../data/portfolio';
+
+import Abdulhaqpic3 from '../data/Abdulhaqpic3.JPG';
 
 const About = () => {
   const [ref, inView] = useInView({
@@ -22,6 +24,16 @@ const About = () => {
   const itemVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    setIsOpen(false);
+    setTimeout(() => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300); // 300ms matches your menu close animation
   };
 
   return (
@@ -58,11 +70,18 @@ const About = () => {
             variants={itemVariants}
             className="relative"
           >
-            <div className="relative w-80 h-80 mx-auto lg:mx-0">
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 mx-auto lg:mx-0">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full blur-xl opacity-20 animate-pulse" />
-              <div className="relative w-full h-full bg-slate-800 rounded-full flex items-center justify-center border-4 border-slate-700">
-                <div className="text-6xl">👨‍💻</div>
-              </div>
+              <motion.img
+                src={Abdulhaqpic3}
+                alt="Abdul Haq Zulfiqar profile"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8 }}
+                className="relative w-full h-full object-cover rounded-full border-4 border-slate-700 bg-slate-800 shadow-lg"
+                style={{ aspectRatio: '1/1' }}
+                whileHover={{ scale: 1.05 }}
+              />
             </div>
           </motion.div>
 
@@ -97,7 +116,7 @@ const About = () => {
 
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold text-white mb-4">Core Values</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 {skills.soft.map((skill, index) => (
                   <span
                     key={index}

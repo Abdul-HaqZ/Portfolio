@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Download, Mail, Calendar, ChevronDown } from 'lucide-react';
 import CV from '../ABDUL HAQ ZULFIQAR_SoftwareEng_CV.pdf';
 
 const Hero = () => {
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollIndicator(window.scrollY < 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -105,23 +116,26 @@ const Hero = () => {
         </motion.div>
       </div>
 
-      {/* Scroll Indicator - moved outside content, stays at bottom of homepage */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 1.2 }}
-      >
-        <motion.button
-          onClick={() => scrollToSection('about')}
-          className="flex flex-col items-center text-white/70 hover:text-white transition-colors duration-200"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
+      {/* Scroll Indicator */}
+      {showScrollIndicator && (
+        <motion.div
+          className="fixed bottom-8 inset-x-0 z-20 flex justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.8, delay: 1.2 }}
         >
-          <span className="text-sm mb-2">Scroll Down</span>
-          <ChevronDown className="w-8 h-8" />
-        </motion.button>
-      </motion.div>
+          <motion.button
+            onClick={() => scrollToSection('about')}
+            className="flex flex-col items-center text-white/70 hover:text-white transition-colors duration-200"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <span className="text-sm mb-2">Scroll Down</span>
+            <ChevronDown className="w-8 h-8" />
+          </motion.button>
+        </motion.div>
+      )}
     </section>
   );
 };

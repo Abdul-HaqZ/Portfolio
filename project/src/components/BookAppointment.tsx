@@ -121,28 +121,23 @@ const BookAppointment = () => {
                   whileHover={{ scale: 1.02 }}
                   className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-all duration-300 cursor-pointer"
                 >
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-3 rounded-lg ${colorClasses.bg} ${colorClasses.border} border`}>
+                  <div className="flex flex-col md:flex-row items-start md:space-x-4 space-y-4 md:space-y-0">
+                    <div className={`p-3 rounded-lg ${colorClasses.bg} ${colorClasses.border} border flex-shrink-0 mb-2 md:mb-0`}>
                       <Icon className={`w-6 h-6 ${colorClasses.icon}`} />
                     </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                         <h4 className="text-xl font-semibold text-white">{meeting.title}</h4>
-                        <span className={`px-3 py-1 rounded-full text-sm ${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`}>
-                          {meeting.duration}
-                        </span>
+                        <span className={`px-3 py-1 rounded-full text-sm ${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border} w-max mt-1 md:mt-0`}>{meeting.duration}</span>
                       </div>
-                      
                       <p className="text-slate-300 mb-4">{meeting.description}</p>
-                      
                       <motion.a
                         href={meeting.link}
                         target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`px-4 py-2 ${colorClasses.button} text-white rounded-lg font-medium transition-colors duration-200`}
+                        className={`block w-full md:w-auto px-4 py-2 ${colorClasses.button} text-white rounded-lg font-medium transition-colors duration-200 text-center`}
                       >
                         Select {meeting.title}
                       </motion.a>

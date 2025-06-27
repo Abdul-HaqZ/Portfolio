@@ -54,7 +54,7 @@ const Projects = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projects.map((project, index) => (
+          {projects.map((project) => (
             <motion.div
               key={project.id}
               variants={itemVariants}
@@ -93,14 +93,14 @@ const Projects = () => {
                 </div>
 
                 {/* Project Links */}
-                <div className="flex space-x-4">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-4">
                   <motion.a
                     href={project.demo}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
+                    className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 col-span-1 sm:w-auto"
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     Demo
@@ -112,7 +112,7 @@ const Projects = () => {
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center px-3 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors duration-200"
+                    className="flex items-center justify-center px-3 py-2 bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors duration-200 col-span-1 sm:w-auto"
                   >
                     <Github className="w-4 h-4 mr-2" />
                     Code
@@ -121,7 +121,7 @@ const Projects = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center px-3 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 transition-colors duration-200"
+                    className="flex items-center justify-center px-3 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 transition-colors duration-200 col-span-2 justify-self-center w-2/3 sm:w-auto"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Details

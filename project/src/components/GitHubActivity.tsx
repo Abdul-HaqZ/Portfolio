@@ -11,21 +11,43 @@ const GitHubActivity = () => {
     threshold: 0.1
   });
 
-  const [contributions, setContributions] = useState<any[]>([]);
+  type ContributionDay = { date: string; count: number };
+  type ContributionWeek = { days: ContributionDay[] };
+  const [contributions, setContributions] = useState<ContributionWeek[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayCols, setDisplayCols] = useState<number>(53); // Default for desktop
+
+  useEffect(() => {
+    const calculateCols = () => {
+      const screenWidth = window.innerWidth;
+      if (screenWidth < 640) { // Tailwind's sm breakpoint
+        setDisplayCols(25); // Show ~25 weeks on mobile
+      } else if (screenWidth < 1024) { // Tailwind's md breakpoint (tablet)
+        setDisplayCols(35); // Show ~35 weeks on tablet
+      } else {
+        setDisplayCols(53); // Default for larger screens
+      }
+    };
+
+    calculateCols(); // Initial calculation
+    window.addEventListener('resize', calculateCols);
+    return () => window.removeEventListener('resize', calculateCols);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
     fetch(`https://github-contributions-api.deno.dev/${GITHUB_USERNAME}.json`)
       .then(res => res.json())
-      .then(data => {
-        // Get the most recent year
-        const year = data.years[0];
-        setContributions(year.contributions);
+      .then((data: unknown) => {
+        if (typeof data === 'object' && data !== null && 'years' in data) {
+          const years = (data as { years: { contributions: ContributionWeek[] }[] }).years;
+          const year = years[0];
+          setContributions(year.contributions);
+        }
         setLoading(false);
       })
-      .catch(err => {
+      .catch(() => {
         setError('Could not load GitHub contributions.');
         setLoading(false);
       });
@@ -96,95 +118,99 @@ const GitHubActivity = () => {
     return colors[language as keyof typeof colors] || "bg-gray-500";
   };
 
-  function getRandomGrid(cols = 53, rows = 7) {
+  function getRandomGrid(cols: number = 53, rows = 7) {
     return Array.from({ length: cols }, () =>
       Array.from({ length: rows }, () => (Math.random() > 0.6 ? (Math.random() > 0.7 ? 4 : 2) : 0))
     );
   }
 
-  function SnakeGrid({ cols = 53, rows = 7 }: { cols?: number; rows?: number }) {
-    const [grid, setGrid] = React.useState<number[][]>(() => getRandomGrid(cols, rows));
-    const [snake, setSnake] = React.useState<{ x: number; y: number }[]>([{ x: 0, y: 0 }]);
-    const [step, setStep] = React.useState(0);
-    const [eaten, setEaten] = React.useState<Set<string>>(new Set());
-
-    // Helper to get next cell in column-major order
-    function getNextCell(x: number, y: number) {
-      let nextX = x, nextY = y + 1;
-      if (nextY >= rows) {
-        nextY = 0;
-        nextX = x + 1;
-        if (nextX >= cols) {
-          nextX = 0;
-        }
-      }
-      return { x: nextX, y: nextY };
-    }
-
-    React.useEffect(() => {
-      const timer = setInterval(() => {
-        setSnake((prev) => {
-          const head = prev[0];
-          const next = getNextCell(head.x, head.y);
-          let newSnake = [next, ...prev];
-          // Grow if on green and not already eaten
-          if (grid[next.x][next.y] > 0 && !eaten.has(`${next.x},${next.y}`)) {
-            setEaten((old) => new Set(old).add(`${next.x},${next.y}`));
-            return newSnake;
-          } else {
-            return [next];
-          }
-        });
-        setStep((s) => s + 1);
-      }, 120);
-      return () => clearInterval(timer);
-    }, [cols, rows, grid, eaten]);
-
-    // Check if all colored blocks are eaten
-    React.useEffect(() => {
-      let allEaten = true;
-      for (let x = 0; x < cols; x++) {
-        for (let y = 0; y < rows; y++) {
-          if (grid[x][y] > 0 && !eaten.has(`${x},${y}`)) {
-            allEaten = false;
-            break;
-          }
-        }
-        if (!allEaten) break;
-      }
-      if (allEaten && step > 0) {
-        setTimeout(() => {
-          setSnake([{ x: 0, y: 0 }]);
-          setStep(0);
-          setEaten(new Set());
-          setGrid(getRandomGrid(cols, rows));
-        }, 600);
-      }
-    }, [eaten, grid, cols, rows, step]);
-
-    return (
-      <div className="grid grid-rows-7 grid-flow-col gap-1 max-w-4xl">
-        {grid.map((week, x) =>
-          week.map((val, y) => {
-            const isSnake = snake.some((s) => s.x === x && s.y === y);
-            const isEaten = eaten.has(`${x},${y}`);
-            return (
-              <div
-                key={x + '-' + y}
-                className={`w-3 h-3 rounded-sm transition-all duration-100
-                  ${isSnake ? 'bg-yellow-400 scale-125 z-10' :
-                    isEaten ? 'bg-slate-800' :
-                    val === 4 ? 'bg-green-500' :
-                    val === 2 ? 'bg-green-600/60' :
-                    'bg-slate-700'}`}
-                style={{ transition: 'background 0.1s, transform 0.1s' }}
-              />
-            );
-          })
-        )}
-      </div>
-    );
+  // Helper to generate a random contributions grid in the same format as real data
+  function getRandomContributions(cols: number, rows: number) {
+    return Array.from({ length: cols }, () => ({
+      days: Array.from({ length: rows }, () => {
+        const count = Math.random() > 0.6 ? (Math.random() > 0.7 ? 4 : 2) : 0;
+        return { count, date: '' };
+      })
+    }));
   }
+
+  // Store random grid in state so it only regenerates on reset
+  const [randomContributions, setRandomContributions] = useState(() => getRandomContributions(displayCols, 7));
+  // If displayCols changes (resize), regenerate random grid
+  useEffect(() => {
+    setRandomContributions(getRandomContributions(displayCols, 7));
+  }, [displayCols]);
+  const tableData = contributions.length > 0 ? contributions.slice(-displayCols) : randomContributions;
+
+  // --- SINGLE SOURCE OF TRUTH ---
+  // Flatten tableData to a 2D array of numbers for easier indexing
+  const grid = tableData.map(week => week.days.map(day => day.count));
+  const rows = 7;
+  const cols = displayCols;
+  // Eaten state and snake state in parent
+  const [eaten, setEaten] = React.useState<Set<string>>(new Set());
+  const [snake, setSnake] = React.useState<{ x: number; y: number }[]>([{ x: 0, y: 0 }]);
+  const [step, setStep] = React.useState(0);
+
+  // Snake movement logic
+  function getNextCellGridMajor(x: number, y: number, cols: number, rows: number) {
+    let nextCol = x + 1;
+    let nextRow = y;
+    if (nextCol >= cols) {
+      nextCol = 0;
+      nextRow = y + 1;
+      if (nextRow >= rows) {
+        nextRow = 0;
+      }
+    }
+    return { x: nextCol, y: nextRow };
+  }
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setSnake((prev) => {
+        const head = prev[0];
+        const next = getNextCellGridMajor(head.x, head.y, cols, rows);
+        let newSnake = [next, ...prev];
+        // Grow if on colored and not already eaten
+        if (grid[next.x][next.y] > 0 && !eaten.has(`${next.x},${next.y}`)) {
+          setEaten((old) => new Set(old).add(`${next.x},${next.y}`));
+          return newSnake;
+        } else {
+          return [next];
+        }
+      });
+      setStep((s) => s + 1);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [cols, rows, grid, eaten]);
+
+  // Check if all colored blocks are eaten
+  React.useEffect(() => {
+    let allEaten = true;
+    for (let x = 0; x < cols; x++) {
+      for (let y = 0; y < rows; y++) {
+        if (grid[x][y] > 0 && !eaten.has(`${x},${y}`)) {
+          allEaten = false;
+          break;
+        }
+      }
+      if (!allEaten) break;
+    }
+    if (allEaten && step > 0) {
+      setTimeout(() => {
+        setSnake([{ x: 0, y: 0 }]);
+        setStep(0);
+        setEaten(new Set());
+        // Only regenerate random grid if using random data
+        if (contributions.length === 0) {
+          setRandomContributions(getRandomContributions(displayCols, 7));
+        }
+      }, 600);
+    }
+  }, [eaten, grid, cols, rows, step]);
+
+  // --- END SINGLE SOURCE OF TRUTH ---
 
   return (
     <section id="github" className="py-20 bg-slate-950">
@@ -237,50 +263,59 @@ const GitHubActivity = () => {
         {/* Contribution Chart Placeholder */}
         <motion.div
           variants={itemVariants}
-          className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-8 border border-slate-700 mb-16"
+          className="relative bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 sm:p-8 border border-slate-700 mb-16 min-h-[120px]"
         >
           <h3 className="text-2xl font-semibold text-white mb-6 flex items-center">
             <Activity className="w-6 h-6 mr-3 text-green-400" />
             Contribution Activity
           </h3>
-          {/* Real GitHub-style contribution chart */}
-          {loading ? (
-            <div className="text-slate-400 text-center py-8">Loading contributions...</div>
-          ) : error ? (
-            <div className="flex flex-col items-center py-8">
-              <div className="text-red-400 text-center mb-4">Could not load GitHub contributions.</div>
-              <SnakeGrid />
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <div className="grid grid-rows-7 grid-flow-col gap-1 max-w-4xl">
-                {contributions.map((week: any, weekIdx: number) =>
-                  week.days.map((day: any, dayIdx: number) => (
-                    <div
-                      key={weekIdx + '-' + dayIdx}
-                      className={`w-3 h-3 rounded-sm ${
-                        day.count === 0
-                          ? 'bg-slate-700'
-                          : day.count < 2
-                          ? 'bg-green-600/30'
-                          : day.count < 5
-                          ? 'bg-green-600/60'
-                          : 'bg-green-500'
-                      }`}
-                      title={`${day.count} contributions on ${day.date}`}
-                    />
-                  ))
-                )}
-              </div>
+          {/* Overlay error message if error */}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70 z-30">
+              <span className="text-red-400 text-center text-sm sm:text-base font-semibold">Could not load GitHub contributions.</span>
             </div>
           )}
-          <div className="flex items-center justify-between mt-4 text-sm text-slate-400">
+          {/* Only render the currently displayed grid as the table, with snake overlayed on blocks */}
+          <div className={`relative z-20 ${error ? 'opacity-60 pointer-events-none' : ''}`}>
+            <div className="grid grid-rows-7 grid-flow-col gap-1">
+              {grid.map((col, colIdx) =>
+                col.map((val, rowIdx) => {
+                  const isEaten = eaten.has(`${colIdx},${rowIdx}`);
+                  // Snake logic: is this cell the snake's head or body?
+                  const isHead = snake.length > 0 && snake[0].x === colIdx && snake[0].y === rowIdx;
+                  const isBody = !isHead && snake.some((s) => s.x === colIdx && s.y === rowIdx);
+                  return (
+                    <div
+                      key={colIdx + '-' + rowIdx}
+                      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 lg:w-3 lg:h-3 rounded-full md:rounded-sm
+                        ${isHead ? 'bg-lime-400 scale-150 z-20' :
+                          isBody ? 'bg-yellow-300 scale-125 z-10' :
+                          isEaten && val > 0
+                          ? 'bg-slate-800'
+                          : val === 0
+                          ? 'bg-slate-700'
+                          : val < 2
+                          ? 'bg-green-600/30'
+                          : val < 5
+                          ? 'bg-green-600/60'
+                          : 'bg-green-500'}
+                        transition-all duration-100`
+                      }
+                      style={{ transition: 'background 0.1s, transform 0.1s' }}
+                      title={''}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-4 text-xs sm:text-sm text-slate-400 relative z-20">
             <span>Less</span>
             <div className="flex space-x-1">
-              <div className="w-3 h-3 bg-slate-700 rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-600/30 rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-600/60 rounded-sm"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-slate-700 rounded-full md:rounded-sm"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-green-600/30 rounded-full md:rounded-sm"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-green-600/60 rounded-full md:rounded-sm"></div>
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-green-500 rounded-full md:rounded-sm"></div>
             </div>
             <span>More</span>
           </div>
