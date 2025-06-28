@@ -148,9 +148,9 @@ const GitHubActivity = () => {
   const rows = 7;
   const cols = displayCols;
   // Eaten state and snake state in parent
-  const [eaten, setEaten] = React.useState<Set<string>>(new Set());
-  const [snake, setSnake] = React.useState<{ x: number; y: number }[]>([{ x: 0, y: 0 }]);
-  const [step, setStep] = React.useState(0);
+  const [eaten, setEaten] = useState<Set<string>>(new Set());
+  const [snake, setSnake] = useState<{ x: number; y: number }[]>([{ x: 0, y: 0 }]);
+  const [step, setStep] = useState(0);
 
   // Snake movement logic
   function getNextCellGridMajor(x: number, y: number, cols: number, rows: number) {
@@ -166,7 +166,7 @@ const GitHubActivity = () => {
     return { x: nextCol, y: nextRow };
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setSnake((prev) => {
         const head = prev[0];
@@ -186,7 +186,7 @@ const GitHubActivity = () => {
   }, [cols, rows, grid, eaten]);
 
   // Check if all colored blocks are eaten
-  React.useEffect(() => {
+  useEffect(() => {
     let allEaten = true;
     for (let x = 0; x < cols; x++) {
       for (let y = 0; y < rows; y++) {
