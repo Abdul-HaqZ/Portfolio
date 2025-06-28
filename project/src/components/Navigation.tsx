@@ -38,7 +38,7 @@ const Navigation = () => {
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
     }
-    setIsOpen(false);
+    setTimeout(() => setIsOpen(false), 120);
   };
 
   return (
